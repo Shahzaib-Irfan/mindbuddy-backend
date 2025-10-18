@@ -1,7 +1,8 @@
-import { Controller, Post, Get, Put, Delete, UseGuards, Body } from "@nestjs/common";
+import { Controller, Post, Get, Put, Delete, UseGuards, Body, Param } from "@nestjs/common";
 import { JournalService } from "./journal.service";
 import { CreateJournalDto } from "./dtos/CreateJournal.dto";
 import { AuthGuard } from "src/modules/auth/auth.guard";
+import { UpdateJournalDto } from "./dtos/UpdateJournal.dto";
 
 @Controller('journal')
 export class JournalController {
@@ -21,7 +22,7 @@ export class JournalController {
 
     @Put(':id')
     @UseGuards(AuthGuard)
-    async update(id: string, dto: CreateJournalDto) {
+    async update(@Param('id') id: string, @Body() dto: UpdateJournalDto) {
         var updatedJournal = await this.journalService.update(id, dto);
         if (!updatedJournal) {
             return {
@@ -38,7 +39,7 @@ export class JournalController {
 
     @Get(':id')
     @UseGuards(AuthGuard)
-    async getById(id: string) {
+    async getById(@Param('id') id: string) {
         var journal = await this.journalService.findById(id);
         if (!journal) {
             return {
@@ -66,7 +67,7 @@ export class JournalController {
 
     @Delete(':id')
     @UseGuards(AuthGuard)
-    async delete(id: string) {
+    async delete(@Param('id') id: string) {
         await this.journalService.delete(id);
         return {
             statusCode: 200,
