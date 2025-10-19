@@ -8,6 +8,9 @@ import { Journal } from './modules/journal/journal.entities';
 import { DatabaseConfig } from './config/database.config';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { CacheModule } from '@nestjs/cache-manager';
+import { RedisConfig } from './config/redis.config';
+import { GeminiModule } from './modules/gemini/gemini.module';
 
 @Module({
   imports: [
@@ -20,6 +23,10 @@ import { ThrottlerModule } from '@nestjs/throttler';
         useClass: DatabaseConfig,
       }
     ),
+    CacheModule.registerAsync({
+      isGlobal: true,
+      useClass: RedisConfig,
+    }),
     ThrottlerModule.forRootAsync({
       useFactory: () => ([{
         ttl: parseInt(process.env.RATE_LIMIT_TTL!) || 60,
@@ -29,6 +36,7 @@ import { ThrottlerModule } from '@nestjs/throttler';
     UsersModule,
     AuthModule,
     JournalModule,
+    GeminiModule,
   ],
 })
 export class AppModule {}
