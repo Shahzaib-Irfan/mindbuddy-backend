@@ -6,11 +6,11 @@
     export class GeminiService {
 
       private genAI: GoogleGenerativeAI;
-      private model: any; // Or a more specific type if desired
+      private model: any;
 
       constructor(private configService: ConfigService) {
         this.genAI = new GoogleGenerativeAI(this.configService.get<string>('OPENAI_API_KEY')!);
-        this.model = this.genAI.getGenerativeModel({ model: this.configService.get<string>('OPENAI_MODEL')! });
+        this.model = this.genAI.getGenerativeModel({ model: this.configService.get<string>('OPENAI_MODEL') || 'gemini-2.0-flash' });
       }
 
       async generateContent(prompt: string): Promise<string> {
@@ -24,7 +24,15 @@
         }
       }
 
-      // Add methods for chat, multi-turn conversations, etc.
+      async generateJSON(prompt: string): Promise<any> {
+        const fullPrompt = `${prompt}\n\nReturn the response strictly in JSON format.`;
+        const result = await this.generateContent(fullPrompt);
+        try {
+          return JSON.parse(result);
+        } catch {
+          throw new Error('Gemini did not return valid JSON');
+        }
+      }
       async startChat() {
         return this.model.startChat({ history: [] });
       }

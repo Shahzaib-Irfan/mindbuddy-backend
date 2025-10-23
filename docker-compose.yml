@@ -14,6 +14,8 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mindbuddy-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d mindbuddy"]
       interval: 10s
@@ -50,7 +52,6 @@ services:
     depends_on:
       - redis
 
-
   app:
     build:
       context: .
@@ -58,10 +59,18 @@ services:
     container_name: nest-docker-postgres
     environment:
       - PORT=3000
+      - QUEUE_REDIS_HOST=redis
+      - QUEUE_REDIS_PORT=6379
     ports:
       - "3000:3000"
+    networks:
+      - mindbuddy-network
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
     volumes:
       - ./src:/app/src
 
@@ -74,6 +83,8 @@ services:
       - PGADMIN_DEFAULT_PASSWORD=pgadmin4
     ports:
       - "5050:80"
+    networks:
+      - mindbuddy-network
     depends_on:
       - postgres
 

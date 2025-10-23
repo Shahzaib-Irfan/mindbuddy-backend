@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Put, Delete, UseGuards, Body, Param } from "@nestjs/common";
+import { Controller, Post, Get, Put, Delete, UseGuards, Body, Param, Request } from "@nestjs/common";
 import { JournalService } from "./journal.service";
 import { CreateJournalDto } from "./dtos/CreateJournal.dto";
 import { AuthGuard } from "src/modules/auth/auth.guard";
@@ -10,8 +10,9 @@ export class JournalController {
 
     @Post()
     @UseGuards(AuthGuard)
-    async create(@Body() dto: CreateJournalDto) {
-        var savedJournal = await this.journalService.create(dto);
+    async create(@Body() dto: CreateJournalDto, @Request() req: any,) {
+        console.log(`User: ${JSON.stringify(req.user)}`);
+        var savedJournal = await this.journalService.create(req.user.sub, dto);
 
         return {
             statusCode: 201,
@@ -22,8 +23,8 @@ export class JournalController {
 
     @Put(':id')
     @UseGuards(AuthGuard)
-    async update(@Param('id') id: string, @Body() dto: UpdateJournalDto) {
-        var updatedJournal = await this.journalService.update(id, dto);
+    async update(@Param('id') id: string, @Body() dto: UpdateJournalDto, @Request() req: any) {
+        var updatedJournal = await this.journalService.updateByUser(req.user.sub, id, dto);
         if (!updatedJournal) {
             return {
                 statusCode: 404,
@@ -39,8 +40,8 @@ export class JournalController {
 
     @Get(':id')
     @UseGuards(AuthGuard)
-    async getById(@Param('id') id: string) {
-        var journal = await this.journalService.findById(id);
+    async getById(@Param('id') id: string, @Request() req: any) {
+        var journal = await this.journalService.findByUserAndId(req.user.sub, id);
         if (!journal) {
             return {
                 statusCode: 404,
@@ -56,8 +57,8 @@ export class JournalController {
 
     @Get()
     @UseGuards(AuthGuard)
-    async getAll() {
-        var journals = await this.journalService.findAll();
+    async getAll(@Request() req: any) {
+        var journals = await this.journalService.findByUser(req.user.sub);
         return {
             statusCode: 200,
             message: "Journal entries retrieved successfully",
@@ -67,8 +68,14 @@ export class JournalController {
 
     @Delete(':id')
     @UseGuards(AuthGuard)
-    async delete(@Param('id') id: string) {
-        await this.journalService.delete(id);
+    async delete(@Param('id') id: string, @Request() req: any) {
+        var result = await this.journalService.deleteByUser(req.user.sub, id);
+        if (!result) {
+            return {
+                statusCode: 404,
+                message: "Journal entry not found"
+            }
+        }
         return {
             statusCode: 200,
             message: "Journal entry deleted successfully"
